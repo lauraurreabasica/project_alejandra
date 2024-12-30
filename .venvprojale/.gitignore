@@ -1,0 +1,17 @@
+# created by virtualenv automatically
+# Entornos virtuales
+venv/
+venvprojale/
+
+# Archivos compilados
+__pycache__/
+*.pyc
+*.pyo
+
+# Archivos de configuración
+.env
+db.sqlite3
+
+# Archivos de sistema
+.DS_Store
+
