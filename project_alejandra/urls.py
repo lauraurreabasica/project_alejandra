@@ -3,5 +3,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('app_alejandra.urls')),  # Conecta las URLs de mi_app
+    path('', include('app_alejandra.urls')),  # Redirige las rutas raíz a app_alejandra
 ]

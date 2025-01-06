@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<style>
+    /* Estilo para los botones del contenido principal */
+    .buttons-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* 2 columnas */
+        gap: 5px; /* Espacio entre los botones */
+        justify-items: center;
+        align-items: center;
+        padding: 20px;
+    }
+    .buttons-grid button {
+        background-color: #3F0216;
+        color: white;
+        padding: 15px 30px;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        width: 40%;
+    }
+    .buttons-grid button:hover {
+        background-color: #5F0216;
+    }
+</style>
+<div class="buttons-grid">
+    <button onclick="location.href='/insumos/'">Insumos</button>
+    <button onclick="location.href='/medidas/'">Medidas</button>
+    <button onclick="location.href='/inventario/'">Inventario</button>
+    <button onclick="location.href='/clientes/'">Clientes</button>
+    <button onclick="location.href='/productos/'">Productos</button>
+    <button onclick="location.href='/colores/'">Colores</button>
+    <button onclick="location.href='/proveedores/'">Proveedores</button>
+    <button onclick="location.href='/manualistas/'">Manualistas</button>
+</div>
+{% endblock %}
