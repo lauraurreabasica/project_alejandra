@@ -3,6 +3,256 @@
 {% block title %}Insumos{% endblock %}
 
 {% block content %}
-<h1>Insumos</h1>
-<p>Esta es la página para gestionar los insumos.</p>
+<style>
+    /* Estilo general */
+    .form-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-container h2 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #3F0216;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group button {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    .form-group select {
+        appearance: none;
+        background: #fff;
+    }
+
+.form-group button {
+    background-color: #3F0216;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px; /* Espaciado interno */
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: auto; /* Ajusta el ancho al contenido */
+    text-align: center; /* Asegura que el texto esté centrado */
+}
+
+.form-group button:hover {
+    background-color: #5F0216;
+}
+
+    .color-group {
+        margin-top: 20px;
+    }
+
+    .color-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .color-option {
+        display: flex;
+        align-items: center;
+        gap: 5px; /* Espacio entre el checkbox y la caja de color */
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Dos columnas de igual ancho */
+        gap: 20px; /* Espacio entre las columnas */
+        margin-top: 20px;
+    }
+     #image-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 10px;
+        background-color: #f9f9f9;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #preview-container {
+        width: 180px;
+        height: 180px;
+        border: 1px solid #ccc;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 10px;
+        background-color: white;
+    }
+
+    #image-preview {
+        max-width: 100%;
+        max-height: 100%;
+        display: none;
+    }
+
+    #custom-upload-button {
+        background-color: #3F0216;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.3s ease;
+        margin-top: 10px;
+    }
+
+    #custom-upload-button:hover {
+        background-color: #5F0216;
+    }
+
+    input[type="file"] {
+        display: none; /* Oculta el input de archivo */
+    }
+
+    .dropdowns-container .form-group {
+        margin-bottom: 15px;
+    }
+    .button-container {
+    display: flex;
+    justify-content: center; /* Centra el botón horizontalmente */
+    margin-top: 20px; /* Espacio superior */
+}
+
+</style>
+
+<div class="form-container">
+    <h2>Gestionar Insumos</h2>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-grid">
+            <!-- Columna 1: Contenedor de la imagen -->
+            <div id="image-container">
+                <!-- Contenedor de previsualización -->
+                <div id="preview-container">
+                    <img id="image-preview" src="#" alt="Previsualización">
+                </div>
+                <!-- Botón personalizado para seleccionar la imagen -->
+                <button type="button" id="custom-upload-button" onclick="document.getElementById('imagen').click()">
+                    Insertar Imagen
+                </button>
+                <!-- Input oculto para seleccionar el archivo -->
+                <input type="file" id="imagen" name="imagen" accept="image/*" onchange="previewImage(event)" style="display: none;">
+            </div>
+
+            <!-- Columna 2: Dropdowns -->
+            <div class="dropdowns-container">
+                <div class="form-group">
+                    <label for="referencia">Referencia</label>
+                    <select id="referencia" name="referencia">
+                        <option value="" selected>Selecciona una referencia</option>
+                        {% for referencia in referencias %}
+                        <option value="{{ referencia.id }}">{{ referencia.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                    <!-- Agregar nueva referencia -->
+                    <div style="margin-top: 10px;">
+                        <input type="text" id="nueva_referencia" name="nueva_referencia" placeholder="Escribe una nueva referencia...">
+                        <button type="submit" name="action" value="agregar_referencia">Agregar referencia</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="nombre">Nombre</label>
+                    <select id="nombre" name="nombre">
+                        <option value="" selected>Selecciona un nombre</option>
+                        {% for nombre in nombres %}
+                        <option value="{{ nombre.id }}">{{ nombre.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                    <!-- Agregar nuevo nombre -->
+                    <div style="margin-top: 10px;">
+                        <input type="text" id="nuevo_nombre" name="nuevo_nombre" placeholder="Escribe un nuevo nombre...">
+                        <button type="submit" name="action" value="agregar_nombre">Agregar nombre</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="medida">Medida</label>
+                    <select id="medida" name="medida">
+                        <option value="" selected>Selecciona una medida</option>
+                        {% for medida in medidas %}
+                        <option value="{{ medida.id }}">{{ medida.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                    <!-- Agregar nueva medida -->
+                    <div style="margin-top: 10px;">
+                        <input type="text" id="nueva_medida" name="nueva_medida" placeholder="Escribe una nueva medida...">
+                        <button type="submit" name="action" value="agregar_medida">Agregar medida</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selección de colores -->
+        <div class="color-group">
+            <label>Colores</label>
+            <div class="color-options">
+                {% for color in colores %}
+                <div class="color-option">
+                    <input type="checkbox" id="{{ color.id }}" name="colores" value="{{ color.id }}">
+                    <label for="{{ color.id }}" style="margin-left: 5px;">{{ color.nombre }}</label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Agregar nuevo color -->
+        <div class="form-group">
+            <input type="text" id="nuevo_color" name="nuevo_color" placeholder="Escribe un color nuevo...">
+        </div>
+
+        <!-- Botón para guardar -->
+        <div class="form-group button-container">
+            <button type="submit" name="action" value="agregar_color">Agregar color</button>
+            <button type="submit" name="action" value="guardar_formulario">Guardar</button>
+        </div>
+    </form>
+</div>
+<script>
+    function previewImage(event) {
+        const file = event.target.files[0]; // Obtiene el archivo seleccionado
+        const preview = document.getElementById('image-preview'); // Elemento para mostrar la imagen
+        const previewContainer = document.getElementById('preview-container'); // Contenedor
+
+        if (file) {
+            const reader = new FileReader(); // Crear un lector de archivos
+            reader.onload = function(e) {
+                preview.src = e.target.result; // Asigna la URL generada al elemento de imagen
+                preview.style.display = 'block'; // Muestra la imagen
+            };
+            reader.readAsDataURL(file); // Lee el archivo como una URL de datos
+        } else {
+            preview.src = '#'; // Restablece la fuente si no hay archivo
+            preview.style.display = 'none'; // Oculta la imagen
+        }
+    }
+</script>
 {% endblock %}

@@ -114,6 +114,26 @@
         <button class="btn-logout" onclick="location.href='{% url 'logout' %}'">Salir</button>
     </div>
 
+    <!-- Mensajes superpuestos -->
+    <div class="messages">
+        {% if messages %}
+        <ul class="message-list">
+            {% for message in messages %}
+            <li class="message-item {{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+
+    <!-- Fondo con imagen -->
+    <div class="background">
+        <div class="content">
+            {% block content %}
+            <!-- Este bloque será reemplazado por el contenido específico de cada página -->
+            {% endblock %}
+        </div>
+    </div>
+
     <!-- Menú lateral -->
     <div id="menu-lateral" class="menu-lateral">
         <ul>
@@ -126,16 +146,6 @@
             <li onclick="location.href='/proveedores/'">Proveedores</li>
             <li onclick="location.href='/manualistas/'">Manualistas</li>
         </ul>
-    </div>
-
-
-    <!-- Fondo con imagen -->
-    <div class="background">
-        <div class="content">
-            {% block content %}
-            <!-- Este bloque será reemplazado por el contenido específico de cada página -->
-            {% endblock %}
-        </div>
     </div>
 
     <!-- Script para manejar el menú desplegable -->
