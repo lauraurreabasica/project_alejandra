@@ -18,7 +18,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: #3F0216;
+            background-color: black;
             padding: 10px 20px;
             color: white;
             position: fixed;
@@ -82,7 +82,7 @@
 
         /* Fondo con imagen */
         .background {
-            background-image: url("{% static 'images/logo.png' %}"); /* Ruta a tu imagen */
+            {% comment %} background-image: url("{% static 'images/logo.png' %}");  {% endcomment %}
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -137,14 +137,17 @@
     <!-- Menú lateral -->
     <div id="menu-lateral" class="menu-lateral">
         <ul>
+            <li onclick="location.href='/home/'">Home</li>
             <li onclick="location.href='/insumos/'">Insumos</li>
-            <li onclick="location.href='/medidas/'">Medidas</li>
-            <li onclick="location.href='/inventario/'">Inventario</li>
+            {% comment %} <li onclick="location.href='/medidas/'">Medidas</li> {% endcomment %}
+            {% comment %} <li onclick="location.href='/inventario/'">Inventario</li> {% endcomment %}
             <li onclick="location.href='/clientes/'">Clientes</li>
             <li onclick="location.href='/productos/'">Productos</li>
-            <li onclick="location.href='/colores/'">Colores</li>
+            {% comment %} <li onclick="location.href='/colores/'">Colores</li> {% endcomment %}
             <li onclick="location.href='/proveedores/'">Proveedores</li>
             <li onclick="location.href='/manualistas/'">Manualistas</li>
+            <li onclick="location.href='/compras/'">Compras</li>
+            <li onclick="location.href='/produccion/'">Produccion</li>
         </ul>
     </div>
 

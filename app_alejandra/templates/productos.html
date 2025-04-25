@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+
+{% block title %}Productos{% endblock %}
+
+{% block content %}
+<style>
+    /* Estilo general */
+    .form-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-container h2 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #3F0216;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group button {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    .form-group select {
+        appearance: none;
+        background: #fff;
+    }
+
+.form-group button {
+    background-color: #3F0216;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px; /* Espaciado interno */
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: auto; /* Ajusta el ancho al contenido */
+    text-align: center; /* Asegura que el texto esté centrado */
+}
+
+.form-group button:hover {
+    background-color: #5F0216;
+}
+
+    .color-group {
+        margin-top: 20px;
+    }
+
+    .color-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .color-option {
+        display: flex;
+        align-items: center;
+        gap: 5px; /* Espacio entre el checkbox y la caja de color */
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Dos columnas de igual ancho */
+        gap: 20px; /* Espacio entre las columnas */
+        margin-top: 20px;
+    }
+     #image-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 10px;
+        background-color: #f9f9f9;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #preview-container {
+        width: 180px;
+        height: 180px;
+        border: 1px solid #ccc;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 10px;
+        background-color: white;
+    }
+
+    #image-preview {
+        max-width: 100%;
+        max-height: 100%;
+        display: none;
+    }
+
+    #custom-upload-button {
+        background-color: #3F0216;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.3s ease;
+        margin-top: 10px;
+    }
+
+    #custom-upload-button:hover {
+        background-color: #5F0216;
+    }
+
+    input[type="file"] {
+        display: none; /* Oculta el input de archivo */
+    }
+
+    .dropdowns-container .form-group {
+        margin-bottom: 15px;
+    }
+    .button-container {
+    display: flex;
+    justify-content: center; /* Centra el botón horizontalmente */
+    margin-top: 20px; /* Espacio superior */
+
+    /* Estilos para la tabla de insumos */
+#insumos-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background-color: #fff; /* Fondo blanco para contraste */
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilo para la cabecera de la tabla */
+#insumos-table thead {
+    background-color: #3F0216; /* Color de encabezado */
+    color: white;
+}
+
+/* Estilo para celdas de encabezado */
+#insumos-table th {
+    padding: 12px;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Estilo para celdas del cuerpo */
+#insumos-table td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+}
+
+/* Asegura que el select y el input tengan tamaño adecuado dentro de la celda */
+#insumos-table select, 
+#insumos-table input[type="number"] {
+    width: 90%;
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    text-align: center;
+}
+
+/* Espaciado uniforme en la tabla */
+#insumos-table tr:nth-child(even) {
+    background-color: #f9f9f9; /* Color alterno para filas */
+}
+
+/* Botón para eliminar fila */
+.add-remove-btn {
+    background: #EACADF;
+    color: black;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.add-remove-btn:hover {
+    background: #d5a8c7;
+}
+
+    
+}
+
+</style>
+
+<div class="form-container">
+    <h2>Gestionar Productos</h2>
+
+    <div id="lista-productos">
+        <h2>Productos registrados</h2>
+
+        <div class="form-group button-container">
+            <button type="button" onclick="mostrarFormularioProducto()">➕ Crear nuevo producto</button>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <thead>
+                <tr style="background-color: #3F0216; color: white;">
+                    <th style="padding: 8px;">Referencia</th>
+                    <th style="padding: 8px;">Nombre</th>
+                    <th style="padding: 8px;">Colores</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos_creados %}
+                <tr style="border-bottom: 1px solid #ccc;">
+                    <td style="padding: 8px;">{{ producto.referencia }}</td>
+                    <td style="padding: 8px;">{{ producto.nombre }}</td>
+                    <td style="padding: 8px;">
+                        {% for color in producto.colores.all %}
+                            {{ color.nombre }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3">No hay productos registrados aún.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    
+        
+    </div>
+
+
+    <form method="POST" enctype="multipart/form-data" id="form-producto" style="display: none;">
+
+        {% csrf_token %}
+        <div class="form-grid">
+            <!-- Columna 1: Contenedor de la imagen -->
+            <div id="image-container">
+                <!-- Contenedor de previsualización -->
+                <div id="preview-container">
+                    <img id="image-preview" src="#" alt="Previsualización">
+                </div>
+                <!-- Botón personalizado para seleccionar la imagen -->
+                <button type="button" id="custom-upload-button" onclick="document.getElementById('imagen').click()">
+                    Insertar Imagen
+                </button>
+                <!-- Input oculto para seleccionar el archivo -->
+                <input type="file" id="imagen" name="imagen" accept="image/*" onchange="previewImage(event)" style="display: none;">
+            </div>
+
+            <!-- Columna 2: Dropdowns -->
+            <div class="dropdowns-container">
+                <div class="form-group">
+                    <label for="referencia">Referencia</label>
+                    <!-- Agregar nueva referencia -->
+                    <div style="margin-top: 10px;">
+                        <input type="text" id="nueva_referencia" name="nueva_referencia" placeholder="Escribe una nueva referencia...">
+                        
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="nombre">Nombre</label>
+                    
+                    <!-- Agregar nuevo nombre -->
+                    <div style="margin-top: 10px;">
+                        <input type="text" id="nuevo_nombre" name="nuevo_nombre" placeholder="Escribe un nuevo nombre...">
+                       
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="es_paquete_checkbox" name="es_paquete" onchange="toggleCantidadPaquete()">
+                        ¿Es un paquete?
+                    </label>
+                </div>
+                
+                <div class="form-group" id="cantidad_paquete_container" style="display: none;">
+                    <label for="cantidad_por_paquete">Cantidad por paquete</label>
+                    <input type="number" name="cantidad_por_paquete" id="cantidad_por_paquete" min="1">
+                </div>
+
+
+                
+            </div>
+        </div>
+
+        <!-- Selección de colores -->
+        {% comment %} <div class="color-group">
+            <label>Colores</label>
+            <div class="color-options">
+                {% for color in colores %}
+                <div class="color-option">
+                    <input type="checkbox" id="{{ color.id }}" name="colores" value="{{ color.id }}">
+                    <label for="{{ color.id }}" style="margin-left: 5px;">{{ color.nombre }}</label>
+                </div>
+                {% endfor %}
+            </div>
+        </div> {% endcomment %}
+
+        <!-- Insumos requeridos -->
+        <h3>Insumos requeridos</h3>
+        <table id="insumos-table">
+            <thead>
+                <tr>
+                    <th>Insumo</th>
+                    <th>Cantidad</th>
+                    <th>Color</th> <!-- NUEVO -->
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="insumo-row">
+                    <td>
+                        <select name="insumo_id[]" onchange="actualizarColoresInsumo(this)">
+                            <option value="">-- Seleccionar --</option> 
+                            {% for insumo in insumos %}
+                            <option value="{{ insumo.id }}">{{ insumo.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <input type="number" name="cantidad[]" value="1" min="1">
+                    </td>
+                    <td>
+                        <select name="color_id[]" class="color-select">
+                            <option value="">-- Seleccionar --</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button type="button" class="add-remove-btn" onclick="eliminarFila(this)">❌</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <button type="button" class="add-remove-btn" onclick="agregarFila()">+ Agregar Insumo</button>
+
+        <!-- Botón para guardar -->
+        <div class="form-group button-container">
+            <button type="button" onclick="volverAVistaTabla()">← Atrás</button>
+            <button type="submit" name="action" value="guardar_formulario">Guardar</button>
+        </div>
+    </form>
+</div>
+<script>
+    const insumoColores = {{ colores_json|safe }};
+
+    function volverAVistaTabla() {
+        document.getElementById("form-producto").style.display = "none";
+        document.getElementById("lista-productos").style.display = "block";
+    }
+
+    function mostrarFormularioProducto() {
+        document.getElementById("lista-productos").style.display = "none";
+        document.getElementById("form-producto").style.display = "block";
+    }
+
+    function previewImage(event) {
+        const file = event.target.files[0];
+        const preview = document.getElementById('image-preview');
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            preview.src = '#';
+            preview.style.display = 'none';
+        }
+    }
+
+    function agregarFila() {
+        const tabla = document.getElementById('insumos-table').getElementsByTagName('tbody')[0];
+        const nuevaFila = document.createElement('tr');
+
+        nuevaFila.innerHTML = `
+            <td>
+                <select name="insumo_id[]" onchange="actualizarColoresInsumo(this)">
+                    <option value="">-- Seleccionar --</option> 
+                    {% for insumo in insumos %}
+                    <option value="{{ insumo.id }}">{{ insumo.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <input type="number" name="cantidad[]" value="1" min="1">
+            </td>
+            <td>
+                <select name="color_id[]" class="color-select">
+                    <option value="">-- Seleccionar --</option>
+                </select>
+            </td>
+            <td>
+                <button type="button" class="add-remove-btn" onclick="eliminarFila(this)">❌</button>
+            </td>
+        `;
+
+        tabla.appendChild(nuevaFila);
+    }
+
+    function eliminarFila(btn) {
+        btn.parentElement.parentElement.remove();
+    }
+
+    function toggleCantidadPaquete() {
+        const checkbox = document.getElementById("es_paquete_checkbox");
+        const container = document.getElementById("cantidad_paquete_container");
+        container.style.display = checkbox.checked ? "block" : "none";
+    }
+
+    function actualizarColoresInsumo(select) {
+        const row = select.closest('tr');
+        const colorSelect = row.querySelector('.color-select');
+        const insumoId = select.value;
+
+        colorSelect.innerHTML = '<option value="">-- Seleccionar --</option>';
+
+        if (insumoColores[insumoId]) {
+            insumoColores[insumoId].forEach(color => {
+                colorSelect.innerHTML += `<option value="${color.id}">${color.nombre}</option>`;
+            });
+        }
+    }
+</script>
+{% endblock %}

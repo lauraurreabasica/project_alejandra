@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Manualistas{% endblock %}
+
+{% block content %}
+<style>
+    .form-container {
+        max-width: 700px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .form-container h2 {
+        color: #3F0216;
+        font-size: 22px;
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+        text-align: left;
+    }
+
+    .form-group label {
+        font-weight: bold;
+        color: #3F0216;
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    .form-group input, .form-group select, .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+    }
+
+    .form-group button {
+        background-color: #3F0216;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 10px 20px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        width: 100%;
+    }
+
+    .form-group button:hover {
+        background-color: #5F0216;
+    }
+</style>
+
+<div class="form-container">
+    <h2>Gestión de Manualistas</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="tipo_documento">Tipo de Documento</label>
+            <select name="tipo_documento" required>
+                <option value="CC">Cédula de Ciudadanía</option>
+                <option value="NIT">Número de Identificación Tributaria</option>
+                <option value="CE">Cédula de Extranjería</option>
+                <option value="PAS">Pasaporte</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="documento">Número de Documento</label>
+            <input type="text" name="documento" required>
+        </div>
+        <div class="form-group">
+            <label for="nombre">Nombre de la Manualista</label>
+            <input type="text" name="nombre" required>
+        </div>
+        <div class="form-group">
+            <label for="telefono">Teléfono</label>
+            <input type="text" name="telefono">
+        </div>
+        <div class="form-group">
+            <label for="email">Correo Electrónico</label>
+            <input type="email" name="email">
+        </div>
+        <div class="form-group">
+            <label for="direccion">Dirección</label>
+            <textarea name="direccion"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="guardar_fecha">¿Desea guardar la fecha de nacimiento?</label>
+            <select id="guardar_fecha" onchange="toggleFechaNacimiento()">
+                <option value="no">No</option>
+                <option value="si">Sí</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="fecha_nacimiento_group" style="display: none;">
+            <label for="fecha_nacimiento">Fecha de Nacimiento</label>
+            <input type="date" id="fecha_nacimiento" name="fecha_nacimiento">
+        </div>
+
+        <div class="form-group">
+            <button type="submit">Agregar Manualista</button>
+        </div>
+    </form>
+
+    <h3>Manualistas Registradas</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Tipo Doc</th>
+                <th>Documento</th>
+                <th>Nombre</th>
+                <th>Teléfono</th>
+                <th>Email</th>
+                <th>Dirección</th>
+                <th>Fecha de Nacimiento</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for manualista in manualistas %}
+            <tr>
+                <td>{{ manualista.get_tipo_documento_display }}</td>
+                <td>{{ manualista.documento }}</td>
+                <td>{{ manualista.nombre }}</td>
+                <td>{{ manualista.telefono|default:"-" }}</td>
+                <td>{{ manualista.email|default:"-" }}</td>
+                <td>{{ manualista.direccion|default:"-" }}</td>
+                <td>{{ manualista.fecha_nacimiento|default:"No registrada" }}</td>
+                <td>
+                    <form method="POST" action="{% url 'eliminar_manualista' manualista.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="delete-btn">❌</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function toggleFechaNacimiento() {
+        document.getElementById("fecha_nacimiento_group").style.display = 
+            document.getElementById("guardar_fecha").value === "si" ? "block" : "none";
+    }
+</script>
+
+{% endblock %}

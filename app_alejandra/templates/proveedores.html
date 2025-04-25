@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Proveedores{% endblock %}
+
+{% block content %}
+<style>
+    .form-container {
+        max-width: 700px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .form-container h2 {
+        color: #3F0216;
+        font-size: 22px;
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+        text-align: left;
+    }
+
+    .form-group label {
+        font-weight: bold;
+        color: #3F0216;
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    .form-group input, .form-group select, .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+    }
+
+    .form-group button {
+        background-color: #3F0216;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 10px 20px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        width: 100%;
+    }
+
+    .form-group button:hover {
+        background-color: #5F0216;
+    }
+
+    .table-container {
+        margin-top: 20px;
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    th, td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    th {
+        background: #3F0216;
+        color: white;
+    }
+
+    .delete-btn {
+        background: #E74C3C;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .delete-btn:hover {
+        background: #C0392B;
+    }
+</style>
+
+<div class="form-container">
+    <h2>Gestión de Proveedores</h2>
+
+    <!-- Formulario para agregar nuevo proveedor -->
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="tipo_documento">Tipo de Documento</label>
+            <select name="tipo_documento" required>
+                <option value="CC">Cédula de Ciudadanía</option>
+                <option value="NIT">Número de Identificación Tributaria</option>
+                <option value="CE">Cédula de Extranjería</option>
+                <option value="PAS">Pasaporte</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="documento">Número de Documento</label>
+            <input type="text" name="documento" required>
+        </div>
+        <div class="form-group">
+            <label for="nombre">Nombre del Proveedor</label>
+            <input type="text" name="nombre" required>
+        </div>
+        <div class="form-group">
+            <label for="telefono">Teléfono</label>
+            <input type="text" name="telefono">
+        </div>
+        <div class="form-group">
+            <label for="email">Correo Electrónico</label>
+            <input type="email" name="email">
+        </div>
+        <div class="form-group">
+            <label for="direccion">Dirección</label>
+            <textarea name="direccion"></textarea>
+        </div>
+        <div class="form-group">
+            <button type="submit">Agregar Proveedor</button>
+        </div>
+    </form>
+
+    <h3>Proveedores Registrados</h3>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Tipo Doc</th>
+                    <th>Documento</th>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Email</th>
+                    <th>Dirección</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for proveedor in proveedores %}
+                <tr>
+                    <td>{{ proveedor.get_tipo_documento_display }}</td>
+                    <td>{{ proveedor.documento }}</td>
+                    <td>{{ proveedor.nombre }}</td>
+                    <td>{{ proveedor.telefono|default:"-" }}</td>
+                    <td>{{ proveedor.email|default:"-" }}</td>
+                    <td>{{ proveedor.direccion|default:"-" }}</td>
+                    <td>
+                        <form method="POST" action="{% url 'eliminar_proveedor' proveedor.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="delete-btn">❌</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

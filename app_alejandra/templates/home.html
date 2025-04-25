@@ -14,11 +14,12 @@
         padding: 20px;
     }
     .buttons-grid button {
-        background-color: #3F0216;
+        background-color: #EACADF;
         color: white;
         padding: 15px 30px;
         font-size: 16px;
-        border: none;
+        color: black;
+        border: 2px solid black;
         border-radius: 5px;
         cursor: pointer;
         transition: background-color 0.3s ease;
@@ -30,12 +31,15 @@
 </style>
 <div class="buttons-grid">
     <button onclick="location.href='/insumos/'">Insumos</button>
-    <button onclick="location.href='/medidas/'">Medidas</button>
-    <button onclick="location.href='/inventario/'">Inventario</button>
+    {% comment %} <button onclick="location.href='/medidas/'">Medidas</button> {% endcomment %}
+    {% comment %} <button onclick="location.href='/inventario/'">Inventario</button> {% endcomment %}
     <button onclick="location.href='/clientes/'">Clientes</button>
+    {% comment %} <button onclick="location.href='/ventas/'">Ventas</button> {% endcomment %}
     <button onclick="location.href='/productos/'">Productos</button>
-    <button onclick="location.href='/colores/'">Colores</button>
+    {% comment %} <button onclick="location.href='/colores/'">Colores</button> {% endcomment %}
     <button onclick="location.href='/proveedores/'">Proveedores</button>
     <button onclick="location.href='/manualistas/'">Manualistas</button>
+    <button onclick="location.href='/compras/'">Compras</button>
+    <button onclick="location.href='/produccion/'">Produccion</button>
 </div>
 {% endblock %}

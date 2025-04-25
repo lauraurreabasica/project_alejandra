@@ -143,9 +143,50 @@
 
 </style>
 
+
+
 <div class="form-container">
     <h2>Gestionar Insumos</h2>
-    <form method="POST" enctype="multipart/form-data">
+
+    <!-- Vista de lista de insumos -->
+    <div id="lista-insumos" style="display: block;">
+        <h2>Insumos registrados</h2>
+
+        <div class="form-group button-container">
+            <button type="button" onclick="mostrarFormulario()">➕ Crear nuevo insumo</button>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <thead>
+                <tr style="background-color: #3F0216; color: white;">
+                    <th style="padding: 8px;">Referencia</th>
+                    <th style="padding: 8px;">Nombre</th>
+                    <th style="padding: 8px;">Medida</th>
+                    <th style="padding: 8px;">Colores</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for insumo in insumos_creados %}
+                <tr style="border-bottom: 1px solid #ccc;">
+                    <td style="padding: 8px;">{{ insumo.referencia }}</td>
+                    <td style="padding: 8px;">{{ insumo.nombre }}</td>
+                    <td style="padding: 8px;">{{ insumo.medida.nombre }}</td>
+                    <td style="padding: 8px;">
+                        {% for color in insumo.colores.all %}
+                            {{ color.nombre }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">No hay insumos registrados aún.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="form-crear-insumo" style="display: none;">
         {% csrf_token %}
         <div class="form-grid">
             <!-- Columna 1: Contenedor de la imagen -->
@@ -166,31 +207,20 @@
             <div class="dropdowns-container">
                 <div class="form-group">
                     <label for="referencia">Referencia</label>
-                    <select id="referencia" name="referencia">
-                        <option value="" selected>Selecciona una referencia</option>
-                        {% for referencia in referencias %}
-                        <option value="{{ referencia.id }}">{{ referencia.nombre }}</option>
-                        {% endfor %}
-                    </select>
                     <!-- Agregar nueva referencia -->
                     <div style="margin-top: 10px;">
                         <input type="text" id="nueva_referencia" name="nueva_referencia" placeholder="Escribe una nueva referencia...">
-                        <button type="submit" name="action" value="agregar_referencia">Agregar referencia</button>
+                        
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="nombre">Nombre</label>
-                    <select id="nombre" name="nombre">
-                        <option value="" selected>Selecciona un nombre</option>
-                        {% for nombre in nombres %}
-                        <option value="{{ nombre.id }}">{{ nombre.nombre }}</option>
-                        {% endfor %}
-                    </select>
+                    
                     <!-- Agregar nuevo nombre -->
                     <div style="margin-top: 10px;">
                         <input type="text" id="nuevo_nombre" name="nuevo_nombre" placeholder="Escribe un nuevo nombre...">
-                        <button type="submit" name="action" value="agregar_nombre">Agregar nombre</button>
+                       
                     </div>
                 </div>
 
@@ -231,12 +261,23 @@
 
         <!-- Botón para guardar -->
         <div class="form-group button-container">
+            <button type="button" onclick="volverALista()">← Atrás</button>
             <button type="submit" name="action" value="agregar_color">Agregar color</button>
             <button type="submit" name="action" value="guardar_formulario">Guardar</button>
         </div>
     </form>
 </div>
 <script>
+    function volverALista() {
+        document.getElementById('form-crear-insumo').style.display = 'none';
+        document.getElementById('lista-insumos').style.display = 'block';
+    }
+    
+    function mostrarFormulario() {
+        document.getElementById('lista-insumos').style.display = 'none';
+        document.getElementById('form-crear-insumo').style.display = 'block';
+    }
+    
     function previewImage(event) {
         const file = event.target.files[0]; // Obtiene el archivo seleccionado
         const preview = document.getElementById('image-preview'); // Elemento para mostrar la imagen
