@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Seguimiento de Producción{% endblock %}
+
+{% block content %}
+<style>
+    .form-container {
+        max-width: 1000px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    table {
+        width: 100%;
+        margin-top: 20px;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
+        text-align: center;
+    }
+
+    th {
+        background: #3F0216;
+        color: white;
+    }
+
+    .btn-finish {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .btn-finish:hover {
+        background-color: #218838;
+    }
+</style>
+
+<div class="form-container">
+    <h2>Seguimiento de Producciones</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID Producción</th>
+                <th>Manualista</th>
+                <th>Fecha Inicio</th>
+                <th>Fecha Tentativa</th>
+                <th>Estado</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for produccion in producciones %}
+            <tr>
+                <td>{{ produccion.id }}</td>
+                <td>{{ produccion.manualista.nombre }}</td>
+                <td>{{ produccion.fecha_inicio }}</td>
+                <td>{{ produccion.fecha_tentativa }}</td>
+                <td>{{ produccion.estado }}</td>
+                <td>
+                    {% if produccion.estado != "Terminado" %}
+                    <form method="POST" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="produccion_id" value="{{ produccion.id }}">
+                        <button type="submit" class="btn-finish">Marcar como Terminada</button>
+                    </form>
+                    {% else %}
+                    Terminada
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6">No hay producciones registradas aún.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

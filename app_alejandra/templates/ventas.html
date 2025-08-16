@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Ventas{% endblock %}
+
+{% block content %}
+<style>
+    .form-container {
+        max-width: 1000px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    table {
+        width: 100%;
+        margin-top: 20px;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
+        text-align: center;
+    }
+
+    th {
+        background: #3F0216;
+        color: white;
+    }
+
+    input[type="number"], select {
+        width: 100%;
+        padding: 5px;
+    }
+
+    .btn-delete {
+        background-color: #e74c3c;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .btn-add {
+        background-color: #3F0216;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+</style>
+
+<div class="form-container">
+    <h2>Registrar Venta</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="cliente">Seleccionar Cliente</label>
+            <select name="cliente" required>
+                {% for cliente in clientes %}
+                <option value="{{ cliente.id }}">{{ cliente.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <h3>Productos a Vender</h3>
+        <table id="ventas-table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Color</th>
+                    <th>Cantidad</th>
+                    <th>Valor Venta</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <button type="button" class="btn-add" onclick="agregarFila()">+ Agregar Producto</button>
+
+        <div class="form-group">
+            <button type="submit" style="margin-top: 20px;">Registrar Venta</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    const inventario = JSON.parse('{{ inventario_json|safe }}');
+    console.log("Inventario disponible:", inventario);
+
+    function agregarFila() {
+        const tbody = document.querySelector("#ventas-table tbody");
+        const row = document.createElement("tr");
+
+        let opcionesProducto = Object.keys(inventario).map(id => {
+            const p = inventario[id];
+            return `<option value="${id}">${p.nombre} (${p.color}) - Disp: ${p.cantidad}</option>`;
+        }).join("");
+
+        row.innerHTML = `
+            <td>
+                <select name="inventario_id[]" required>
+                    <option value="">-- Seleccionar --</option>
+                    ${opcionesProducto}
+                </select>
+            </td>
+            <td>
+                <input type="text" name="color[]" readonly>
+            </td>
+            <td>
+                <input type="number" name="cantidad[]" min="1" required>
+            </td>
+            <td>
+                <input type="number" name="valor_venta[]" step="0.01" required>
+            </td>
+            <td>
+                <button type="button" class="btn-delete" onclick="this.parentElement.parentElement.remove()">❌</button>
+            </td>
+        `;
+
+        const select = row.querySelector("select");
+        select.addEventListener("change", () => {
+            const data = inventario[select.value];
+            row.querySelector("input[name='color[]']").value = data?.color || "";
+            row.querySelector("input[name='cantidad[]']").max = data?.cantidad || 1;
+        });
+
+        tbody.appendChild(row);
+    }
+</script>
+{% endblock %}

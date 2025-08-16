@@ -7,7 +7,7 @@ from django.shortcuts import render
 from django.db import IntegrityError
 import json
 from .models import Color, Medida, Referencia, Nombre, Insumo2,  Producto, ProductoInsumo, Proveedor, Compra, CompraInsumo
-from .models import Cliente, Manualista, Produccion, LineaProduccion
+from .models import Cliente, Manualista, Produccion, LineaProduccion, InventarioProducto, Venta
 from datetime import datetime
 from django.http import JsonResponse
 from django.db.models import Sum, Max
@@ -424,11 +424,11 @@ def produccion_view(request):
         fecha_inicio = request.POST.get('fecha_inicio')
         fecha_tentativa = request.POST.get('fecha_tentativa')
         productos_ids = request.POST.getlist('producto_id[]')
-        colores_ids = request.POST.getlist('color_id[]')
         cantidades = request.POST.getlist('cantidad[]')
+        colores_ids = request.POST.getlist('color_id[]')
 
         # Validaciones
-        if not (manualista_id and fecha_inicio and fecha_tentativa and productos_ids and colores_ids and cantidades):
+        if not (manualista_id and fecha_inicio and fecha_tentativa and productos_ids and cantidades):
             messages.error(request, "Todos los campos deben estar completos.")
             return redirect('produccion')
 
@@ -440,54 +440,29 @@ def produccion_view(request):
             estado="Pendiente"
         )
 
-        insumos_a_reservar = []  # Lista temporal para guardar insumos a reservar
+        ins2 = calcular_produccion_interno(productos_ids, cantidades)
 
-        for producto_id, color_id, cantidad in zip(productos_ids, colores_ids, cantidades):
-            producto = Producto.objects.get(id=producto_id)
-            color = Color.objects.get(id=color_id)
-            cantidad = int(cantidad)
-
-            # Guardar el producto en la orden de producción
-            LineaProduccion.objects.create(
-                produccion=nueva_produccion,
-                producto=producto,
-                color=color,
-                cantidad=cantidad
-            )
-
-            # Obtener los insumos requeridos para el producto
-            insumos = ProductoInsumo.objects.filter(producto=producto)
-
-            for insumo in insumos:
-                # Determinar si el insumo tiene el color correcto o si se usa "SinColor"
-                insumo_color = color if insumo.insumo.colores.filter(id=color.id).exists() else Color.objects.get(nombre="SinColor")
-                insumo_total = cantidad * insumo.cantidad  # Multiplicar cantidad de insumo por cantidad de productos
-
-                # Verificar existencias disponibles
-                compras_total = CompraInsumo.objects.filter(
-                    insumo=insumo.insumo,
-                    color=insumo_color
-                ).aggregate(total=Sum('cantidad'))['total'] or 0
-
-                if compras_total < insumo_total:
-                    messages.error(request, f"No hay suficiente stock de {insumo.insumo.nombre} ({insumo_color.nombre}). Producción cancelada.")
-                    nueva_produccion.delete()  # Eliminar la producción si no hay suficiente stock
-                    return redirect('produccion')
-
-                # Agregar a la lista de insumos reservados
-                insumos_a_reservar.append({
-                    'insumo': insumo.insumo,
-                    'color': insumo_color,
-                    'cantidad': insumo_total
-                })
-
-        # Registrar los insumos reservados en `CompraInsumo`
-        for reserva in insumos_a_reservar:
+        for i in ins2.values():
+            color_insumo = Color.objects.get(id=i['color'])
             CompraInsumo.objects.create(
-                insumo=reserva['insumo'],
-                color=reserva['color'],
-                cantidad=-reserva['cantidad'],  # Se registra como negativo para indicar reserva
-                compra=None  # Indica que no es una compra sino una reserva por producción
+                compra=None,
+                produccion=nueva_produccion,
+                insumo=i['insumo'],
+                color=color_insumo,
+                cantidad=-i['cantidad'],  # negativo
+                medida=i['insumo'].medida,
+                valor_unitario=0,
+                estado='Reserva Producción'
+            )
+        
+        for producto_id, cantidad in zip(productos_ids, cantidades):
+            producto = Producto.objects.get(id=producto_id)
+            InventarioProducto.objects.create(
+                produccion = nueva_produccion,
+                producto = producto,
+                color = color_insumo,
+                cantidad = cantidad,
+                estado = 'En producción'
             )
 
         messages.success(request, "Orden de producción creada exitosamente con insumos reservados.")
@@ -579,6 +554,167 @@ def calcular_produccion(request):
             color=ids[1]
         ).aggregate(total=Sum('cantidad'))['total'] or 0
         insumos_requeridos[key]['faltantes'] = insumos_requeridos[key]['cantidad'] - compras_total
+        if insumos_requeridos[key]['faltantes'] < 0:
+            insumos_requeridos[key]['faltantes'] = 0
         pass
 
     return JsonResponse({'errores': errores, 'insumos_requeridos': list(insumos_requeridos.values())})
+def calcular_produccion_interno(productos_ids, cantidades):
+ 
+
+    # Corregir el problema de los valores concatenados en un solo string
+    if len(productos_ids) == 1 and "," in productos_ids[0]:
+        productos_ids = productos_ids[0].split(",")
+
+    # if len(colores_ids) == 1 and "," in colores_ids[0]:
+    #     colores_ids = colores_ids[0].split(",")
+
+    if len(cantidades) == 1 and "," in cantidades[0]:
+        cantidades = cantidades[0].split(",")
+
+    errores = []
+    insumos_requeridos = {}
+
+    for producto_id, cantidad in zip(productos_ids, cantidades):
+        if not producto_id or not cantidad:  
+            continue  
+
+        cantidad = int(cantidad)
+        producto = Producto.objects.get(id=producto_id)
+        insumos = ProductoInsumo.objects.filter(producto=producto)
+
+        for insumo in insumos:
+            insumo_color_valido = True
+            # colores_insumo = insumo.insumo.colores.all()
+
+            # Si el insumo tiene "SinColor", se permite cualquier color
+            # if colores_insumo.filter(nombre="SinColor").exists():
+            #     insumo_color_valido = True
+            # elif colores_insumo.filter(id=color.id).exists():
+            #     insumo_color_valido = True
+            # else:
+            #     errores.append(f"El insumo '{insumo.insumo.nombre}' no tiene el color '{color.nombre}'.")
+
+            if insumo_color_valido:
+                insumo_total = cantidad * insumo.cantidad  
+                insumo_id = insumo.insumo.id
+                insumo_color = insumo.color.nombre
+                color = insumo.color.id
+                insumo_medida = insumo.insumo.medida.nombre if insumo.insumo.medida else "N/A"
+
+                # Obtener la cantidad disponible en `CompraInsumo`
+                compras_total = CompraInsumo.objects.filter(
+                    insumo=insumo.insumo,
+                    color=color
+                ).aggregate(total=Sum('cantidad'))['total'] or 0
+
+                
+
+                # Calcular faltantes
+                cantidad_disponible = compras_total 
+                faltantes = insumo_total - cantidad_disponible if insumo_total > cantidad_disponible else 0
+
+                if f'{insumo_id}-{color}' in insumos_requeridos:
+                    insumos_requeridos[f'{insumo_id}-{color}']['cantidad'] += insumo_total
+                else:
+                    insumos_requeridos[f'{insumo_id}-{color}'] = {
+                        'insumo': insumo.insumo,
+                        'cantidad': insumo_total,
+                        'color': insumo.color.id,
+                        'medida': insumo_medida,
+                    }
+ 
+
+    return insumos_requeridos
+
+@login_required
+def ventas_view(request):
+    if request.method == "POST":
+        cliente_id = request.POST.get('cliente')
+        inventario_ids = request.POST.getlist('inventario_id[]')
+        cantidades = request.POST.getlist('cantidad[]')
+        valores_venta = request.POST.getlist('valor_venta[]')
+
+        if not cliente_id or not inventario_ids or not valores_venta or not cantidades:
+            messages.error(request, "Debes completar todos los campos.")
+            return redirect('ventas')
+
+        cliente = Cliente.objects.get(id=cliente_id)
+        nueva_venta = Venta.objects.create(cliente=cliente)
+
+        if len(set(inventario_ids)) != len(inventario_ids):
+            messages.error(request, "No puedes vender dos veces el mismo producto en la misma venta.")
+            return redirect('ventas')
+
+        for inventario_id, cantidad_str, valor_venta_str in zip(inventario_ids, cantidades, valores_venta):
+            cantidad = int(cantidad_str)
+            valor = float(valor_venta_str)
+            inventario = InventarioProducto.objects.get(id=inventario_id)
+
+            if inventario.estado != 'Terminado':
+                messages.error(request, f"El producto {inventario.producto.nombre} no está disponible para venta.")
+                return redirect('ventas')
+
+            if cantidad > inventario.cantidad:
+                messages.error(request, f"La cantidad para {inventario.producto.nombre} supera el inventario disponible.")
+                return redirect('ventas')
+
+            if cantidad == inventario.cantidad:
+                inventario.estado = 'Vendido'
+                inventario.valor_venta = valor
+                inventario.save()
+            else:
+                inventario.cantidad -= cantidad
+                inventario.save()
+
+                vendido = InventarioProducto.objects.create(
+                    produccion=inventario.produccion,
+                    producto=inventario.producto,
+                    color=inventario.color,
+                    cantidad=cantidad,
+                    estado='Vendido',
+                    valor_venta=valor
+                )
+
+        messages.success(request, "Venta registrada correctamente.")
+        return redirect('ventas')
+
+    clientes = Cliente.objects.all()
+    inventario_obj = InventarioProducto.objects.filter(estado='Terminado')
+
+    inventario_data = {
+        str(i.id): {
+            'nombre': i.producto.nombre,
+            'color': i.color.nombre,
+            'cantidad': i.cantidad
+        } for i in inventario_obj
+    }
+
+    return render(request, 'ventas.html', {
+        'clientes': clientes,
+        'inventario_json': json.dumps(inventario_data)
+    })
+
+
+@login_required
+def seguimiento_produccion_view(request):
+    if request.method == "POST":
+        produccion_id = request.POST.get('produccion_id')
+        produccion = Produccion.objects.get(id=produccion_id)
+        produccion.estado = 'Terminado'
+        produccion.save()
+
+        # También actualizamos el estado de los productos relacionados
+        productos_inventario = InventarioProducto.objects.filter(produccion=produccion)
+        for producto in productos_inventario:
+            producto.estado = 'Terminado'
+            producto.save()
+
+        messages.success(request, f"La producción #{produccion.id} ha sido marcada como Terminada.")
+        return redirect('seguimiento_produccion')
+
+    producciones = Produccion.objects.all().order_by('-fecha_inicio')
+
+    return render(request, 'seguimiento_produccion.html', {
+        'producciones': producciones
+    })

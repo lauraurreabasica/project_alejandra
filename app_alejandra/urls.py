@@ -17,4 +17,6 @@ urlpatterns = [
     path('produccion/', views.produccion_view, name='produccion'),
     path('produccion/guardar/', views.produccion_view, name='guardar_produccion'),
     path('produccion/calcular/', views.calcular_produccion, name='calcular_produccion'),
+    path('seguimiento-produccion/', views.seguimiento_produccion_view, name='seguimiento_produccion'),
+    path('ventas/', views.ventas_view, name='ventas'),
 ]

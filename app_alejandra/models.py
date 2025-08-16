@@ -93,18 +93,27 @@ class Compra(models.Model):
         return f"Compra {self.id} - {self.proveedor.nombre} - {self.fecha.strftime('%d/%m/%Y')}"
 
 class CompraInsumo(models.Model):
-    compra = models.ForeignKey(Compra, on_delete=models.CASCADE)
+    compra = models.ForeignKey(Compra, on_delete=models.CASCADE, null=True, blank=True)
+    produccion = models.ForeignKey('Produccion', on_delete=models.CASCADE, null=True, blank=True)
     insumo = models.ForeignKey('Insumo2', on_delete=models.CASCADE)
     color = models.ForeignKey('Color', on_delete=models.CASCADE, default=1)  # Usar un ID válido
-    cantidad = models.PositiveIntegerField()
+    cantidad = models.IntegerField()
     medida = models.ForeignKey('Medida', on_delete=models.CASCADE)
     valor_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    ESTADO_CHOICES = [
+        ('Compra', 'Compra'),
+        ('Reserva Producción', 'Reserva Producción'),
+        ('Cancelado', 'Cancelado'),
+        ('Terminado', 'Terminado'),
+    ]
+    estado = models.CharField(max_length=30, choices=ESTADO_CHOICES, default='Compra')
 
     def total(self):
         return self.cantidad * self.valor_unitario
 
     def __str__(self):
-        return f"{self.compra} - {self.insumo.nombre} ({self.cantidad} {self.medida.nombre}) - {self.color.nombre}"
+        compra_str = f"Compra {self.compra.id}" if self.compra else (f"Producción {self.produccion.id}" if self.produccion else "Sin Origen")
+        return f"{compra_str} - {self.insumo.nombre} ({self.cantidad} {self.medida.nombre}) - {self.color.nombre}"
 
 class Cliente(models.Model):
     TIPOS_DOCUMENTO = [
@@ -165,4 +174,28 @@ class LineaProduccion(models.Model):
 
     def __str__(self):
         return f"{self.produccion} - {self.producto.nombre} ({self.color.nombre}) x {self.cantidad}"
+
+class EstadoProducto(models.TextChoices):
+    EN_PRODUCCION = 'En producción', 'En producción'
+    TERMINADO = 'Terminado', 'Terminado'
+    VENDIDO = 'Vendido', 'Vendido'
+
+class Venta(models.Model):
+    cliente = models.ForeignKey('Cliente', on_delete=models.CASCADE)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Venta {self.id} - {self.cliente.nombre} - {self.fecha.strftime('%d/%m/%Y')}"
+
+class InventarioProducto(models.Model):
+    produccion = models.ForeignKey('Produccion', on_delete=models.CASCADE, null=True, blank=True)
+    producto = models.ForeignKey('Producto', on_delete=models.CASCADE)
+    color = models.ForeignKey('Color', on_delete=models.CASCADE)
+    cantidad = models.PositiveIntegerField()
+    estado = models.CharField(max_length=20, choices=EstadoProducto.choices, default=EstadoProducto.EN_PRODUCCION)
+    valor_venta = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.produccion} {self.producto.nombre} ({self.color.nombre}) x {self.cantidad} - {self.estado}"
+    
 

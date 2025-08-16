@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import Color, Insumo2, Medida, Producto, ProductoInsumo, Proveedor, Compra, CompraInsumo
-from .models import Cliente, Manualista,  Produccion, LineaProduccion
+from .models import Cliente, Manualista,  Produccion, LineaProduccion, InventarioProducto
 
 admin.site.register(Color)
 admin.site.register(Medida)
@@ -14,3 +14,4 @@ admin.site.register(Cliente)
 admin.site.register(Manualista)
 admin.site.register(Produccion)
 admin.site.register(LineaProduccion)
+admin.site.register(InventarioProducto)
