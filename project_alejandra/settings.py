@@ -76,8 +76,12 @@ WSGI_APPLICATION = 'project_alejandra.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'defaultdb',
+        'USER': 'doadmin',
+        'PASSWORD': 'AVNS_vf0GEXm1usFo7jyzyXJ',
+        'HOST': 'dbaas-db-4855028-do-user-24684306-0.h.db.ondigitalocean.com',
+        'PORT': '25060',
     }
 }
 

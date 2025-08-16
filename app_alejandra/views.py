@@ -11,6 +11,9 @@ from .models import Cliente, Manualista, Produccion, LineaProduccion
 from datetime import datetime
 from django.http import JsonResponse
 from django.db.models import Sum, Max
+import os
+from django.conf import settings
+from django.utils.text import slugify
 
 def login_view(request):
     if request.method == "POST":
@@ -79,12 +82,11 @@ def supplies_view(request):
             return redirect('insumos')
 
         elif action == "guardar_formulario":
-            # pro = Insumo.objects.get(id=1)
-            # pro.delete()
             referencia = request.POST.get('nueva_referencia')
             nombre = request.POST.get('nuevo_nombre')
             medida_id = request.POST.get('medida')
             colores_ids = request.POST.getlist('colores')
+            imagen_file = request.FILES.get('imagen')  # <<-- la imagen
 
             # Validar que los campos no estén vacíos
             if not (referencia and nombre and medida_id and colores_ids):
@@ -92,14 +94,47 @@ def supplies_view(request):
                 return redirect('insumos')
 
             # Obtener las instancias relacionadas
-            # referencia = Referencia.objects.get(id=referencia_id)
-            # nombre = Nombre.objects.get(id=nombre_id)
             medida = Medida.objects.get(id=medida_id)
             colores = Color.objects.filter(id__in=colores_ids)
 
-            # Crear un nuevo insumo y guardar "se guardo" en la columna imagen_url
+            # --- Guardar imagen en /imagenes con nombre insumo-<referencia>.<ext> ---
+            imagen_rel_path = None
+            try:
+                # Carpeta /imagenes en la raíz del proyecto
+                imagenes_root = os.path.join(settings.BASE_DIR, 'imagenes')
+                os.makedirs(imagenes_root, exist_ok=True)
+
+                if imagen_file:
+                    # Extensión original (si no tiene, usamos .jpg)
+                    _, ext = os.path.splitext(imagen_file.name)
+                    ext = ext.lower() if ext else '.jpg'
+
+                    # Nombre de archivo: insumo-<referencia-slug>.<ext>
+                    base_name = f"insumo-{slugify(referencia)}"
+                    filename = base_name + ext
+                    dest_path = os.path.join(imagenes_root, filename)
+
+                    # Si ya existe, versionamos: insumo-<ref>-1.ext, -2.ext, ...
+                    counter = 1
+                    while os.path.exists(dest_path):
+                        filename = f"{base_name}-{counter}{ext}"
+                        dest_path = os.path.join(imagenes_root, filename)
+                        counter += 1
+
+                    # Guardado en disco
+                    with open(dest_path, 'wb+') as destination:
+                        for chunk in imagen_file.chunks():
+                            destination.write(chunk)
+
+                    # Guardamos la ruta relativa para poder usarla en templates
+                    imagen_rel_path = os.path.join('imagenes', filename)
+
+            except Exception as e:
+                messages.warning(request, f"No se pudo guardar la imagen: {str(e)}")
+
+            # Crear Insumo2
             nuevo_insumo = Insumo2.objects.create(
-                imagen_url="se guardo",  # Valor fijo para la columna imagen_url
+                imagen_url=imagen_rel_path or "imagenes/placeholder.jpg",  # guarda la ruta (o un placeholder)
                 referencia=referencia,
                 nombre=nombre,
                 medida=medida
@@ -108,6 +143,7 @@ def supplies_view(request):
 
             messages.success(request, "El formulario fue guardado exitosamente.")
             return redirect('insumos')
+
             
     # Obtener todos los datos para los dropdowns y checkboxes
     colores = Color.objects.all()
@@ -131,50 +167,84 @@ def product_view(request):
         if action == "guardar_formulario":
             referencia = request.POST.get('nueva_referencia')
             nombre = request.POST.get('nuevo_nombre')
-            colores_ids = request.POST.getlist('colores')
+
+            # Estos vienen de la tabla de insumos por fila
             insumos_ids = request.POST.getlist('insumo_id[]')
             cantidad_insumos = request.POST.getlist('cantidad[]')
-            colores_ids = request.POST.getlist('color_id[]')
+            colores_insumo_ids = request.POST.getlist('color_id[]')
 
-            # ✅ Nuevos campos para paquetes
+            # Imagen del producto
+            imagen_file = request.FILES.get('imagen')
+
+            # ✅ Paquetes
             es_paquete = request.POST.get('es_paquete') == 'on'
             cantidad_por_paquete = request.POST.get('cantidad_por_paquete')
 
-            # Validar que los campos no estén vacíos
-            if not (referencia and nombre and colores_ids and insumos_ids and cantidad_insumos):
-                messages.error(request, "Todos los campos deben estar completos.")
+            # Validación básica
+            if not (referencia and nombre and insumos_ids and cantidad_insumos):
+                messages.error(request, "Todos los campos obligatorios deben estar completos.")
                 return redirect('productos')
 
             if es_paquete and not cantidad_por_paquete:
                 messages.error(request, "Debes ingresar la cantidad por paquete.")
                 return redirect('productos')
 
-            colores = Color.objects.filter(id__in=colores_ids)
+            # --- Guardar imagen en /imagenes con nombre producto-<referencia>.<ext> ---
+            imagen_rel_path = None
+            try:
+                imagenes_root = os.path.join(settings.BASE_DIR, 'imagenes')
+                os.makedirs(imagenes_root, exist_ok=True)
+
+                if imagen_file:
+                    _, ext = os.path.splitext(imagen_file.name)
+                    ext = ext.lower() if ext else '.jpg'
+
+                    base_name = f"producto-{slugify(referencia)}"
+                    filename = base_name + ext
+                    dest_path = os.path.join(imagenes_root, filename)
+
+                    counter = 1
+                    while os.path.exists(dest_path):
+                        filename = f"{base_name}-{counter}{ext}"
+                        dest_path = os.path.join(imagenes_root, filename)
+                        counter += 1
+
+                    with open(dest_path, 'wb+') as destination:
+                        for chunk in imagen_file.chunks():
+                            destination.write(chunk)
+
+                    imagen_rel_path = os.path.join('imagenes', filename)
+            except Exception as e:
+                messages.warning(request, f"No se pudo guardar la imagen del producto: {str(e)}")
 
             try:
-                # Verificar si el producto ya existe
+                # Crear o actualizar el producto por referencia
                 nuevo_producto, creado = Producto.objects.get_or_create(
                     referencia=referencia,
                     defaults={
                         'nombre': nombre,
-                        'imagen': "se guardo",  # Puedes reemplazar con lógica de imagen si lo deseas
+                        'imagen': imagen_rel_path or "imagenes/placeholder.jpg",
                         'es_paquete': es_paquete,
                         'cantidad_por_paquete': int(cantidad_por_paquete) if es_paquete else None
                     }
                 )
 
                 if not creado:
-                    messages.warning(request, f"El producto '{nombre}' ya existe, se actualizarán los insumos.")
-                    # Actualizar campos si el producto ya existía
+                    # Actualiza datos si ya existía
                     nuevo_producto.nombre = nombre
                     nuevo_producto.es_paquete = es_paquete
                     nuevo_producto.cantidad_por_paquete = int(cantidad_por_paquete) if es_paquete else None
+                    if imagen_rel_path:  # solo si subieron una nueva imagen
+                        nuevo_producto.imagen = imagen_rel_path
                     nuevo_producto.save()
 
-                nuevo_producto.colores.set(colores)
+                # Guarda líneas de insumos del producto
+                if not creado:
+                    ProductoInsumo.objects.filter(producto=nuevo_producto).delete()
 
-                # Guardar insumos
-                for insumo_id, cantidad, color_id in zip(insumos_ids, cantidad_insumos, colores_ids):
+                for insumo_id, cantidad, color_id in zip(insumos_ids, cantidad_insumos, colores_insumo_ids):
+                    if not insumo_id or not cantidad:
+                        continue
                     insumo = Insumo2.objects.get(id=insumo_id)
                     color = Color.objects.get(id=color_id) if color_id else None
                     ProductoInsumo.objects.create(
@@ -194,6 +264,7 @@ def product_view(request):
             except Exception as e:
                 messages.error(request, f"Error inesperado: {str(e)}")
                 return redirect('productos')
+
 
     # Datos para renderizar el formulario
     colores = Color.objects.all()
